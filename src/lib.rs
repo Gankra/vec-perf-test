@@ -57,10 +57,11 @@
 //! ```
 
 #![feature(unsafe_no_drop_flag, core, core_intrinsics)]
+#![feature(rt, unsafe_no_drop_flag, unique, heap_api, box_raw, filling_drop)]
 #![cfg_attr(test, feature(test))]
 
 extern crate core;
-extern crate raw_vec;
+mod raw_vec;
 
 #[cfg(test)]
 mod bench;
