@@ -61,7 +61,7 @@
 #![cfg_attr(test, feature(test))]
 
 extern crate core;
-mod raw_vec;
+pub mod raw_vec;
 
 #[cfg(test)]
 mod bench;
@@ -568,7 +568,7 @@ impl<T> Vec<T> {
         pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
-        if self.len == self.buf.cap() { self.buf.double(); }
+        if self.len() == self.capacity() { self.buf.double(); }
         unsafe {
             let end = self.as_mut_ptr().offset(self.len as isize);
             ptr::write(end, value);

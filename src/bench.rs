@@ -115,6 +115,164 @@ fn push2(b: &mut test::Bencher) {
 }
 
 #[bench]
+fn push_split1(b: &mut test::Bencher) {
+    let foo = vec![E1; AMT1];
+    b.iter(|| {
+        let mut v = Vec::new();
+        let len = foo.len();
+        v.reserve(len);
+        let mut iter = foo.iter();
+        for _ in 0..len {
+            let e = iter.next().unwrap();
+            v.push(e);
+        }
+        for e in iter {
+            v.push(e);
+        }
+        v
+    });
+}
+#[bench]
+fn push_split2(b: &mut test::Bencher) {
+    let foo = vec![E2; AMT2];
+    b.iter(|| {
+        let mut v = Vec::new();
+        let len = foo.len();
+        v.reserve(len);
+        let mut iter = foo.iter();
+        for _ in 0..len {
+            let e = iter.next().unwrap();
+            v.push(e);
+        }
+        for e in iter {
+            v.push(e);
+        }
+        v
+    });
+}
+
+#[bench]
+fn push_assume1(b: &mut test::Bencher) {
+    let foo = vec![E1; AMT1];
+    b.iter(|| {
+        let mut v = Vec::new();
+        v.reserve(foo.len());
+        for &e in &foo {
+            unsafe { ::std::intrinsics::assume(v.capacity() != v.len()) }
+            v.push(e);
+        }
+        v
+    });
+}
+#[bench]
+fn push_assume2(b: &mut test::Bencher) {
+    let foo = vec![E2; AMT2];
+    b.iter(|| {
+        let mut v = Vec::new();
+        v.reserve(foo.len());
+        for &e in &foo {
+            unsafe { ::std::intrinsics::assume(v.capacity() != v.len()) }
+            v.push(e);
+        }
+        v
+    });
+}
+
+#[bench]
+fn push_unsafe1(b: &mut test::Bencher) {
+    use std::intrinsics::unreachable;
+    use std::ptr;
+
+    let foo = vec![E2; AMT2];
+    b.iter(|| unsafe {
+        let mut v = Vec::new();
+        let len = foo.len();
+        let old_len = v.len();
+        v.reserve(len);
+        let mut iter = foo.iter();
+
+        for i in 0..len {
+            let e = *iter.next().unwrap_or_else(|| unreachable());
+            let end = v.as_mut_ptr().offset((old_len + i) as isize);
+            ptr::write(end, e);
+        }
+
+        v.set_len(old_len + len);
+
+        v
+    });
+}
+
+#[bench]
+fn push_unsafe2(b: &mut test::Bencher) {
+    use std::intrinsics::unreachable;
+    use std::ptr;
+
+    let foo = vec![E2; AMT2];
+    b.iter(|| unsafe {
+        let mut v = Vec::new();
+        let len = foo.len();
+        let old_len = v.len();
+        v.reserve(len);
+        let mut iter = foo.iter();
+
+        for i in 0..len {
+            let e = *iter.next().unwrap_or_else(|| unreachable());
+            let end = v.as_mut_ptr().offset((old_len + i) as isize);
+            ptr::write(end, e);
+            v.set_len(old_len + len);
+        }
+
+        v
+    });
+}
+
+#[bench]
+fn push_unsafe3(b: &mut test::Bencher) {
+    use std::ptr;
+
+    let foo = vec![E2; AMT2];
+    b.iter(|| unsafe {
+        let mut v = Vec::new();
+        let len = foo.len();
+        let old_len = v.len();
+        v.reserve(len);
+        let mut end = v.as_mut_ptr().offset(old_len as isize);
+
+        for &e in &foo {
+            ptr::write(end, e);
+            end = end.offset(1);
+        }
+
+        v.set_len(old_len + len);
+
+        v
+    });
+}
+
+#[bench]
+fn push_unsafe4(b: &mut test::Bencher) {
+    use std::ptr;
+
+    let foo = vec![E2; AMT2];
+    b.iter(|| unsafe {
+        let mut v = Vec::new();
+        let len = foo.len();
+        let old_len = v.len();
+        v.reserve(len);
+        let mut end = v.as_mut_ptr().offset(old_len as isize);
+
+        for &e in &foo {
+            ptr::write(end, e);
+            end = end.offset(1);
+            v.set_len(old_len + len);
+        }
+
+        v
+    });
+}
+
+#[bench]
 fn extend1(b: &mut test::Bencher) {
     let foo = vec![E1; AMT1];
     b.iter(|| {
